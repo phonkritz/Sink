@@ -7,11 +7,20 @@ const limit = 24
 let cursor = ''
 let listComplete = false
 let listError = false
-
 const sortBy = ref('az')
 
 const displayedLinks = computed(() => {
-  const sorted = [...links.value]
+  const now = new Date()
+  
+  // 🔥 Filter expired links
+  const activeLinks = links.value.filter(link => {
+    if (!link.expiresAt) return true
+    const expiryDate = new Date(link.expiresAt)
+    return expiryDate > now
+  })
+  
+  // Sort
+  const sorted = [...activeLinks]
   switch (sortBy.value) {
     case 'newest':
       return sorted.sort((a, b) => b.createdAt - a.createdAt)
@@ -34,7 +43,7 @@ async function getLinks() {
         cursor,
       },
     })
-    links.value = links.value.concat(data.links).filter(Boolean) // Sometimes cloudflare will return null, filter out
+    links.value = links.value.concat(data.links).filter(Boolean)
     cursor = data.cursor
     listComplete = data.list_complete
     listError = false
